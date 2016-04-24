@@ -10,6 +10,12 @@ h1 {
   text-align: center;
 }
 
+.container {
+  margin: 0 auto;
+  max-width: 800px;
+  width: 100%;
+}
+
 .menu {
   /* from http://www.colorzilla.com/gradient-editor */
   background: #b5bdc8; /* Old browsers */

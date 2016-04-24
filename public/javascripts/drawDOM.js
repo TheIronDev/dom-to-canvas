@@ -87,18 +87,12 @@ var drawDOM = (function() {
    */
   function drawNodes(ctx, node) {
 
-    ctx.closePath();
     var radius = 5,
-      height = 20,
+      height = 30,
       startAngle = 0,
       endAngle = 2 * Math.PI,
       x = (node.start + (node.end - node.start) / 2),
       y = node.depth * height + 20;
-
-    ctx.arc(x, y, radius, startAngle, endAngle, false);
-    ctx.fill();
-
-    // TODO: Make a line mapping current node to its parent
 
 
     /**
@@ -109,9 +103,25 @@ var drawDOM = (function() {
      * https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
      */
     node.children.forEach(function(child) {
+
+      // Draw a line from our current node, to each of its children
+      var childX = (child.start + (child.end - child.start) / 2),
+        childY = child.depth * height + 20;
+
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(childX, childY);
+      ctx.stroke();
+      ctx.closePath();
+
       drawNodes(ctx, child);
     });
+
+    ctx.closePath();
+    ctx.arc(x, y, radius, startAngle, endAngle, false);
+    ctx.fill();
   }
+
 
   /**
    * Given a canvas and a HTMLDocument, render nodes onto our canvas
@@ -135,7 +145,11 @@ var drawDOM = (function() {
 
     var domLike = createDOMLike(myDocument, 0, canvas.width);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
     ctx.fillStyle = '#2F73D8';
+    ctx.strokeStyle = '#ccc';
+
     drawNodes(ctx, domLike);
   }
 
