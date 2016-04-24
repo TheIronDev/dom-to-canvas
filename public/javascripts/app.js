@@ -12,8 +12,15 @@
  *
  * For more info, checkout https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
  */
+
 'use strict';
 
+
+/**
+ * drawDOM gets defined in a different file, so just incase its undefined somwhoe, lets return a no-op function
+ * @type {Function}
+ */
+var drawDOM = drawDOM || function() {};
 
 /**
  * I'm wrapping functionality in an IIFE, or "immediately-invoked function expression".
@@ -49,26 +56,7 @@
      *
      * Here is a helpful primer visually on whats happening: http://www.quirksmode.org/js/events_order.html
      */
-    useCapture = false,
-
-    /**
-     * The CanvasRenderingContext2D interface provides the 2D rendering context for the drawing surface of a
-     * <canvas> element. It provides a set of functions that allow us to draw/manipulate a canvas board.
-     *
-     * https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
-     */
-    myCtx = myCanvas.getContext('2d'),
-
-    xhrCallback = function() {
-
-      /**
-       * Fun fact: event callbacks automatically bind the XMLHttpRequest instance as "this". We can override it
-       * if we decide to pass in a function that has been `.bind`ed already... but we probably don't want to do that.
-       */
-      var response = this.response;
-      myCtx.fillText(response, 10, 10);
-      myForm.classList.remove('loading');
-    };
+    useCapture = false;
 
 
   /**
@@ -88,7 +76,17 @@
    * be in the form of a document. I can also set this as text, arraybuffer, blob, and json.
    */
   var xhr = new XMLHttpRequest();
-  xhr.addEventListener('load', xhrCallback);
+  xhr.addEventListener('load', function() {
+
+    myForm.classList.remove('loading');
+
+    /**
+     * Fun fact: event callbacks automatically bind the XMLHttpRequest instance as "this". We can override it
+     * if we decide to pass in a function that has been `.bind`ed already... but we probably don't want to do that.
+     */
+    var response = this.response;
+    drawDOM(myCanvas, response);
+  });
   xhr.responseType ='document';
 
   /**
@@ -193,4 +191,4 @@
     console.log('If you see this, propagation is not bring stopped');
   });
 
-})(document);
+})(document, drawDOM);
