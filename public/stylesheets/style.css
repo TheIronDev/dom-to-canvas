@@ -1,0 +1,57 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+h1 {
+  text-align: center;
+}
+
+.menu {
+  /* from http://www.colorzilla.com/gradient-editor */
+  background: #b5bdc8; /* Old browsers */
+  background: -moz-linear-gradient(-45deg,  #b5bdc8 0%, #828c95 36%, #28343b 100%); /* FF3.6-15 */
+  background: -webkit-linear-gradient(-45deg,  #b5bdc8 0%,#828c95 36%,#28343b 100%); /* Chrome10-25,Safari5.1-6 */
+  background: linear-gradient(135deg,  #b5bdc8 0%,#828c95 36%,#28343b 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b5bdc8', endColorstr='#28343b',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+  padding: 1rem;
+  position: relative;
+}
+
+.menu.loading,
+.menu.loading .menu_input,
+.menu.loading .menu_submit {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+.menu_input {
+  height: 2rem;
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.menu_submit {
+
+  background: #2F73D8;
+  border: none;
+  color: #fff;
+
+  height: 2rem;
+  min-width: 10rem;
+  padding: 0.5rem;
+
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+}
+
+.renderTarget {
+  border: 1px solid #ccc;
+  display: block;
+  width: 100%;
+}
