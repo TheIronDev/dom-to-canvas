@@ -13,24 +13,87 @@
 var drawDOM = (function() {
 
   /**
+   * The document host object maintains a live HTMLCollection of certain element tags.
+   *
+   * While the dom-like structure we are adding won't be live, we can at the very least update the
+   * document to contain a quick reference to these nodes using vanilla arrays.
+   */
+  var docRefTagsMap = {
+    HTML: function(newNode, node, documentRef) {
+      documentRef.documentElement = newNode;
+    },
+    HEAD: function(newNode, node, documentRef) {
+      documentRef.head = newNode;
+    },
+    BODY: function(newNode, node, documentRef) {
+      documentRef.body = newNode;
+    },
+    FORM: function (newNode, node, documentRef) {
+      documentRef.forms.push(newNode);
+    },
+    SCRIPT: function(newNode, node, documentRef) {
+      documentRef.scripts.push(newNode);
+    },
+    A: function(newNode, node, documentRef) {
+      // conditional if href exists https://developer.mozilla.org/en-US/docs/Web/API/Document/links
+      if (node.getAttribute('href')) {
+        documentRef.links.push(newNode);
+      }
+    },
+    AREA: function(newNode, node, documentRef) {
+      // conditional if href exists https://developer.mozilla.org/en-US/docs/Web/API/Document/links
+      if (node.getAttribute('href')) {
+        documentRef.links.push(newNode);
+      }
+    },
+    IMG: function(newNode, node, documentRef) {
+      documentRef.images.push(newNode);
+    }
+  };
+
+  var nodeColorMap = {
+    HTML: '#000',
+    HEAD: '#F00',
+    BODY: '#0F0',
+    default: '#2F73D8'
+  };
+
+  /**
    * Traverse down an document, creating a DOM-like structure
    * @param node - the true DOM node
    * @param parentNode - a dom-like representation of our DOM node
    * @param depth - the node's depth, used for the rendering process
    * @param start - the starting range to draw on the canvas
    * @param end - the ending range to draw on the canvas
+   * @param documentRef {Object} - An object literal that will get merged into our document-like element after traversal
    *
    * @returns {Object} DOM-like object.
    */
   function traverseDomLikeNode(node, parentNode, depth, start, end, documentRef) {
+
+    if (depth > documentRef.largestDepth) {
+      documentRef.largestDepth = depth;
+    }
 
     var newNode = {
       children: [],
       depth: depth,
       end: end,
       start: start,
+      tagName: node.tagName,
       parentNode: parentNode
     };
+
+    // If the node has an id, then lets add it directly to the docRef ID map.
+    if(node.id) {
+      newNode.id = node.id;
+      documentRef.ids[node.id] = newNode;
+    }
+
+    // If our node is among a set of special cases, lets call a function that updates the documentRef
+    if (docRefTagsMap[node.tagName]) {
+      docRefTagsMap[node.tagName](newNode, node, documentRef);
+    }
 
     var childDepth = depth + 1,
       childCount = node.childElementCount,
@@ -70,14 +133,18 @@ var drawDOM = (function() {
       documentElement: null, // reference to <html>
 
       ids: {},
-      anchors: [], // <a> tags
       links: [], // <a> and <area> tags
       images: [], // <img> tags
-      scripts: [] // <scripts>
+      scripts: [], // <scripts>
+      forms: [],
+
+      // Rendering helpers :)
+      largestDepth: 0
     };
 
     var newDocument = traverseDomLikeNode(myDocument, null, 0, start, end, documentRef);
-    return newDocument;
+    var augmentedDoc = Object.assign({}, newDocument, documentRef);
+    return augmentedDoc;
   }
 
   /**
@@ -85,15 +152,14 @@ var drawDOM = (function() {
    * @param ctx
    * @param node
    */
-  function drawNodes(ctx, node) {
+  function drawNodes(ctx, node, cellHeight) {
 
     var radius = 5,
-      height = 30,
+      height = cellHeight,
       startAngle = 0,
       endAngle = 2 * Math.PI,
       x = (node.start + (node.end - node.start) / 2),
       y = node.depth * height + 20;
-
 
     /**
      * Important Note: We recreated the dom using objects and arrays.
@@ -114,12 +180,14 @@ var drawDOM = (function() {
       ctx.stroke();
       ctx.closePath();
 
-      drawNodes(ctx, child);
+      drawNodes(ctx, child, cellHeight);
     });
 
-    ctx.closePath();
+    ctx.beginPath();
+    ctx.fillStyle = nodeColorMap[node.tagName] ? nodeColorMap[node.tagName] : nodeColorMap.default;
     ctx.arc(x, y, radius, startAngle, endAngle, false);
     ctx.fill();
+
   }
 
 
@@ -144,13 +212,11 @@ var drawDOM = (function() {
 
 
     var domLike = createDOMLike(myDocument, 0, canvas.width);
+    var cellHeight = canvas.height / (domLike.largestDepth + 1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-
-    ctx.fillStyle = '#2F73D8';
     ctx.strokeStyle = '#ccc';
-
-    drawNodes(ctx, domLike);
+    drawNodes(ctx, domLike, cellHeight);
   }
 
   /**
