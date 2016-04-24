@@ -59,6 +59,27 @@ var drawDOM = (function() {
   };
 
   /**
+   * Instead of an if-ladder, or checking if an array contains a value, using a map is a convenient and
+   * fast way to check if something meets a condition.
+   *
+   * The following map is similar to ['HTML', 'HEAD', 'BODY'].includes(node.tagName), but rather than
+   * traversing the entire array, we get to jump straight to a "true" or "undefined" (which is an implied false).
+   */
+  var nodesWithVisibleTags = {
+    HTML: true,
+    HEAD: true,
+    BODY: true
+  };
+
+  /**
+   * These variables are used in drawNodes. Although it seems odd to pull them out of context of that function,
+   * drawNodes() gets called for every node in the dom-tree. That means for every node we reinstantiate two
+   * variables that don't ever change.
+   */
+  var startAngle = 0,
+    endAngle = 2 * Math.PI;
+
+  /**
    * Traverse down an document, creating a DOM-like structure
    * @param node - the true DOM node
    * @param parentNode - a dom-like representation of our DOM node
@@ -152,12 +173,10 @@ var drawDOM = (function() {
    * @param ctx
    * @param node
    */
-  function drawNodes(ctx, node, cellHeight) {
+  function drawNodes(ctx, node, height) {
 
-    var radius = 5,
-      height = cellHeight,
-      startAngle = 0,
-      endAngle = 2 * Math.PI,
+    var tagName = node.tagName,
+      radius = 5,
       x = (node.start + (node.end - node.start) / 2),
       y = node.depth * height + 20;
 
@@ -180,14 +199,22 @@ var drawDOM = (function() {
       ctx.stroke();
       ctx.closePath();
 
-      drawNodes(ctx, child, cellHeight);
+      drawNodes(ctx, child, height);
     });
 
     ctx.beginPath();
-    ctx.fillStyle = nodeColorMap[node.tagName] ? nodeColorMap[node.tagName] : nodeColorMap.default;
+    ctx.fillStyle = nodeColorMap[tagName] ? nodeColorMap[tagName] : nodeColorMap.default;
     ctx.arc(x, y, radius, startAngle, endAngle, false);
     ctx.fill();
 
+    /**
+     * Displaying the tagNames of all the nodes would look terrible, but its nice to point out
+     * some of the core tagNames (html, body, head)
+     */
+    if (nodesWithVisibleTags[tagName]) {
+      ctx.fillStyle = '#000';
+      ctx.fillText(node.tagName, x + 5, y - 5);
+    }
   }
 
 
