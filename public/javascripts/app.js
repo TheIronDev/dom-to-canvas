@@ -144,13 +144,13 @@
      *
      * Once enough time has passed (in our case, 200ms), our event will fire.
      *
-     * Debouncing is incredibally useful for stalling out events such as a quick succession of keystrokes or mousemovement.
+     * Debouncing is incredibly useful for stalling out events such as a quick succession of keystrokes or mousemovement.
      *
      * To clarify, if a user types "hello", we don't want to make a call to our server with "h", "he", "hel"..., we want to
      * wait until they finish typing to trigger our event.
      *
-     * Same thing with mousemovement. If you drag your mouse across the screen, it will attempt to fire a LOTT of events.
-     * To get around that, simply debounce until an adequette delay has passed.
+     * Same thing with mousemove. If you drag your mouse across the screen, it will attempt to fire a LOT of events.
+     * To get around that, simply debounce until an adequate delay has passed.
      *
      * I put 200ms for the purpose of demonstration, but 60-100ms seems to be a much better sweet spot.
      *
@@ -158,7 +158,29 @@
     clearTimeout(simpleDebounce);
     simpleDebounce = setTimeout(function() {
 
-
+      /**
+       * You might notice that I am hitting my own server to fetch the contents of other urls.  By default,
+       * browsers restrict cross-origin HTTP requests from other domains. You can get around this restriction
+       * by making use of CORS, or Cross Origin Resource Sharing. https://www.w3.org/TR/cors/
+       *
+       * CORS gives several options for allowing cross-origin requests. One is to provide additional headers that
+       * define what domains are allowed to make requests from you. For example, "Access-Control-Allow-Origin" defines
+       * which domains are allowed to access content (so returning * means ANYONE can access)
+       *
+       * Preflight requests, on the other hand, act more as a handshake between the requesting server and the response
+       * server. The first request uses the "OPTIONS" method, and an agreement is made between both client and server.
+       * After that, the client can immediately follow up with a GET/POST. Generally there is a duration of time that
+       * this agreement is maintained, so we don't need to wait for 2 full requests to be made each time.
+       *
+       * ...
+       * ...
+       *
+       * But yeah, configuring all that takes more work, and I would still be restricted from a whole lot of websites
+       * that do not have an open "Access-Control-Allow-Origin" header.  So, I'm instead passing the url back into
+       * my own server, and letting the server do a GET for me using the `request` module.  The request doesn't come
+       * baked with a set of CORS security features, so I can get the html content, and send it right along back to
+       * the client.
+       */
       xhr.open('GET', '/fetchUrl?url=' + url);
       xhr.send();
 
