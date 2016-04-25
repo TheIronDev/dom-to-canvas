@@ -57,6 +57,7 @@ h1 {
 .myCanvas {
   background: #fff;
   border: 1px solid #ccc;
+  cursor: pointer;
   display: block;
   margin-bottom: 1rem;
   width: 100%;

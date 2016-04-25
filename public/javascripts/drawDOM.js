@@ -79,6 +79,12 @@ var drawDOM = (function() {
   var startAngle = 0,
     endAngle = 2 * Math.PI;
 
+  // I'm scoping these variables to the top so they can be used in multiple functions without having to pass them around.
+  var cellHeight;
+  var currentTree;
+  var ctx;
+  var treeStack = [];
+
   /**
    * Traverse down an document, creating a DOM-like structure
    * @param node - the true DOM node
@@ -252,6 +258,85 @@ var drawDOM = (function() {
     }
   }
 
+  /**
+   * Recursively travel down the DOM tree, comparing the current node with the x=y coordinates of
+   * the last click event.
+   */
+  function searchForNodeWithXY(node, x, y) {
+
+
+    var child, i;
+
+    if (y >= node.depth * cellHeight && y <= (node.depth + 1) * cellHeight) {
+      return node;
+    }
+
+    for (i = 0; i< node.childElementCount; i++) {
+
+      child = node.children[i];
+
+      /**
+       * Each child will have a smaller (or equal) range to its parent. These ranges do not intersect.
+       * In the event we found a child whose range includes our "x", lets return a search through that child,
+       * since its a better candidate than the other nodes.
+       */
+      if (x > child.start && x < child.end) {
+        return searchForNodeWithXY(child, x, y);
+      }
+    }
+
+    return node;
+  }
+
+  /**
+   * Because canvas is a 2-dimentional block, it doesn't store reference to what "element" or "shapes" we click on.
+   * Instead, we need to figure that ourselves. In our case, we traverse down the tree until we find the node that
+   * we were trying to click on.
+   *
+   * @param event {Event} - some browsers will include a global event, but its always safer to declare it yourself.
+   * For instance, last time I checked FireFox doesn't give you a freebe event object
+   */
+  function handleCanvasClick(event) {
+
+    var x = event.offsetX,
+      y = event.offsetY,
+      canvas = ctx.canvas,
+      found,
+      domLike;
+
+    /**
+     * We're using a stack (actually just an array we are treating like a stack)
+     * If the user clicks the top-left corner, we can assume they were trying to go backwards up the stack.
+     *
+     * If they don't then we should find the node they were trying to click on, and push the previous tree into the stack.
+     */
+    if (x < 20 && y < 20 && treeStack.length) {
+      domLike = treeStack.pop();
+    } else {
+      found = searchForNodeWithXY(currentTree, x, y);
+      domLike = createDOMLike(found, 0, canvas.width);
+      treeStack.push(currentTree);
+    }
+
+    currentTree = domLike;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    /**
+     * If our stack has any nodes in them, then we should display an arrow to indicate the user can go backward.
+     */
+    if (treeStack.length) {
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.moveTo(10, 10);
+      ctx.lineTo(20, 5);
+      ctx.lineTo(20, 15);
+      ctx.fill();
+    }
+
+    drawNodes(ctx, domLike, cellHeight);
+  }
+
 
   /**
    * Given a canvas and a HTMLDocument, render nodes onto our canvas
@@ -270,14 +355,24 @@ var drawDOM = (function() {
      *
      * https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
      */
-    var ctx = canvas.getContext('2d');
+    ctx = canvas.getContext('2d');
 
 
     var domLike = createDOMLike(myDocument, 0, canvas.width);
-    var cellHeight = canvas.height / (domLike.largestDepth + 1);
+    currentTree = domLike;
+    cellHeight = canvas.height / (domLike.largestDepth + 1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#ccc';
     drawNodes(ctx, domLike, cellHeight);
+
+
+    /**
+     * Interesting detail about listeners: if you assign two duplicate eventHandlers to an event, then only one
+     * will get triggered.  "drawDOM()" can get called multiple times, all the user needs to do is enter a different
+     * url in the app.js file. BUT, because "handleCanvasClick" is already defined, we are NOT regisering multiple
+     * click events.
+     */
+    canvas.addEventListener('click', handleCanvasClick);
   }
 
   /**
