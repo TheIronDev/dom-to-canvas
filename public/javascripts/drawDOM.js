@@ -334,6 +334,7 @@ var drawDOM = (function() {
       ctx.fill();
     }
 
+    cellHeight = canvas.height / (domLike.largestDepth + 1);
     drawNodes(ctx, domLike, cellHeight);
   }
 
