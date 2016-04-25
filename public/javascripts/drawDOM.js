@@ -36,13 +36,13 @@ var drawDOM = (function() {
     },
     A: function(newNode, node, documentRef) {
       // conditional if href exists https://developer.mozilla.org/en-US/docs/Web/API/Document/links
-      if (node.getAttribute('href')) {
+      if (node.attributes.href) {
         documentRef.links.push(newNode);
       }
     },
     AREA: function(newNode, node, documentRef) {
       // conditional if href exists https://developer.mozilla.org/en-US/docs/Web/API/Document/links
-      if (node.getAttribute('href')) {
+      if (node.attributes.href) {
         documentRef.links.push(newNode);
       }
     },
@@ -98,12 +98,47 @@ var drawDOM = (function() {
 
     var newNode = {
       children: [],
+      childElementCount: node.childElementCount,
+      attributes: {},
       depth: depth,
       end: end,
       start: start,
       tagName: node.tagName,
       parentNode: parentNode
     };
+
+
+    var attributes = node.attributes,
+      attributesLength,
+      attribute;
+
+    /**
+     * In the event we are traversing DOM-like nodes (and not real DOM nodes), we can simply set the
+     * newNode's attributes object to be the same as the node's attributes.
+     *
+     * One way we can be sure if we are looking at a REAL DOM element is checking that the attributes instance.
+     *
+     * (real) Element.attributes returns a NamedNodeMap
+     */
+    if (attributes instanceof NamedNodeMap) {
+
+      attributesLength = attributes.length || 0;
+      for(var i = 0; i < attributesLength; i++) {
+
+        /**
+         * If you know that attribute you are setting or getting, you almost always will want to use
+         * node.getAttribute(str) or node.setAttribute(). The getter returns the string value of the
+         * attribute.
+         *
+         * Important Note: even if you set an attribute with a number or boolean, it will be returned
+         * as a string.
+         */
+        attribute = attributes[i];
+        newNode.attributes[attribute.name] = attribute.value;
+      }
+    } else {
+      newNode.attributes = node.attributes;
+    }
 
     // If the node has an id, then lets add it directly to the docRef ID map.
     if(node.id) {
