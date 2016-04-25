@@ -5,6 +5,10 @@ The primary intent of this application is to render any DOM tree onto a canvas i
 The secondary intent is to serve as an educational primer. Libraries will not be used, since that takes away from
 getting a better understanding of whats going on.
 
+## Live demo
+
+[http://dom-to-canvas.herokuapp.com/](http://dom-to-canvas.herokuapp.com/)
+
 ## Starting the App
 
 ```
