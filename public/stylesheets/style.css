@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+html {
+  background: #f5f5f5;
+}
+
 body {
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
@@ -17,14 +21,7 @@ h1 {
 }
 
 .menu {
-  /* from http://www.colorzilla.com/gradient-editor */
-  background: #b5bdc8; /* Old browsers */
-  background: -moz-linear-gradient(-45deg,  #b5bdc8 0%, #828c95 36%, #28343b 100%); /* FF3.6-15 */
-  background: -webkit-linear-gradient(-45deg,  #b5bdc8 0%,#828c95 36%,#28343b 100%); /* Chrome10-25,Safari5.1-6 */
-  background: linear-gradient(135deg,  #b5bdc8 0%,#828c95 36%,#28343b 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b5bdc8', endColorstr='#28343b',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
-
-  padding: 1rem;
+  padding: 1rem 0;
   position: relative;
 }
 
@@ -37,7 +34,7 @@ h1 {
 
 .menu_input {
   height: 2rem;
-  padding: 0.5rem;
+  padding: 0 0.5rem;
   width: 100%;
 }
 
@@ -46,18 +43,42 @@ h1 {
   background: #2F73D8;
   border: none;
   color: #fff;
+  cursor: pointer;
 
   height: 2rem;
   min-width: 10rem;
   padding: 0.5rem;
 
   position: absolute;
-  right: 1rem;
+  right: 0;
   top: 1rem;
 }
 
-.renderTarget {
+.myCanvas {
+  background: #fff;
   border: 1px solid #ccc;
   display: block;
+  margin-bottom: 1rem;
   width: 100%;
+}
+
+.about {
+  background: #333;
+  color: #efefef;
+  display: table;
+  overflow: hidden;
+  padding: 1rem;
+}
+.about_link {
+  color: #efefef;
+}
+
+.about_imageWrapper {
+  display: table-cell;
+  vertical-align: middle;
+  height: 100%;
+}
+
+.gravatar {
+  margin-right: 1rem;
 }

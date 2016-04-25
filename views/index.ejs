@@ -3,17 +3,40 @@
   <head>
     <title>DOM-To-Canvas</title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/stylesheets/octicons.css' />
   </head>
   <body>
-    <h1>DOM-To-Canvas</h1>
+    <h1>
+      DOM-To-Canvas
+      <a href="https://github.com/TheIronDeveloper/dom-to-canvas">
+        <i class="mega-octicon octicon-mark-github"></i>
+      </a>
+    </h1>
     <div class="container">
+      <a href="http://www.theirondeveloper.com/">By Tyler Stark</a>
       <form id="fetchUrl" class="menu">
-        <input id="url" class="menu_input" type="text" placeholder="ie: http://www.google.com" />
+        <input id="url" list="urls" class="menu_input" type="text" placeholder="ie: http://www.google.com" />
+        <datalist id="urls">
+          <option>http://www.google.com</option>
+          <option>http://www.facebook.com</option>
+          <option>http://www.reddit.com</option>
+          <option>https://www.github.com/</option>
+          <option>http://www.apple.com</option>
+        </datalist>
         <input class="menu_submit" type="submit" />
       </form>
-      <canvas id="dom-to-canvas" class="renderTarget" width="800" height="600"></canvas>
-      <script src="/javascripts/drawDOM.js"></script>
-      <script src="/javascripts/app.js"></script>
+      <canvas id="dom-to-canvas" class="myCanvas" width="800" height="600"></canvas>
+      <div class="about">
+        <div class="about_imageWrapper">
+          <img class="gravatar" src="https://en.gravatar.com/userimage/47853580/0a9918efdfbbb74daf287d9f6bdc4e00.jpg?size=100" />
+        </div>
+        <h2>Hi, I'm Tyler!</h2>
+        <p>Thanks for taking a look at my side project! If you see something that looks off, or if you think of any cool
+          features that I should add let me know by <a class="about_link" href="https://github.com/TheIronDeveloper/dom-to-canvas/issues">filing an issue</a>.</p>
+          <p><a class="about_link" href="https://github.com/TheIronDeveloper/dom-to-canvas">Pull requests</a> are also always welcome! :)</p>
+      </div>
     </div>
+    <script src="/javascripts/drawDOM.js"></script>
+    <script src="/javascripts/app.js"></script>
   </body>
 </html>

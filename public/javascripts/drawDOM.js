@@ -241,7 +241,6 @@ var drawDOM = (function() {
     var domLike = createDOMLike(myDocument, 0, canvas.width);
     var cellHeight = canvas.height / (domLike.largestDepth + 1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     ctx.strokeStyle = '#ccc';
     drawNodes(ctx, domLike, cellHeight);
   }
