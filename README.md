@@ -8,8 +8,8 @@ verbose amount of documentation.
 
 ## Demo App
 
-[Demo Here](http://dom-to-canvas.herokuapp.com/)
-[Demo Repository](https://github.com/TheIronDeveloper/dom-to-canvas/tree/demo)
+* [Demo Here](http://dom-to-canvas.herokuapp.com/)
+* [Demo Repository](https://github.com/TheIronDeveloper/dom-to-canvas/tree/demo)
 
 
 ## Contributing
