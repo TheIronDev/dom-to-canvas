@@ -13,8 +13,11 @@
 
 'use strict';
 
-
-var domToCanvas = (function() {
+/**
+ * For convenience, if an object (or truthy value) is passed into this IIFE, then it will automatically execute
+ * renderCurrentDOM(), rendering a canvas onto the current document.
+ */
+var domToCanvas = (function(domToCanvasOpts) {
 
   /**
    * The document host object maintains a live HTMLCollection of certain element tags.
@@ -411,6 +414,14 @@ var domToCanvas = (function() {
     ctx.strokeStyle = '#ccc';
     drawNodes(ctx, domLike, cellHeight);
 
+    if (treeStack.length) {
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.moveTo(10, 10);
+      ctx.lineTo(20, 5);
+      ctx.lineTo(20, 15);
+      ctx.fill();
+    }
 
     /**
      * Interesting detail about listeners: if you assign two duplicate eventHandlers to an event, then only one
@@ -531,6 +542,48 @@ var domToCanvas = (function() {
         currentHoveredNode.style.backgroundColor = currentHoveredNodeBackgroundColor;
       }
     });
+
+    /**
+     * And now, to be extra fancy, we're going to use an observer to watch the
+     * document for changes.
+     *
+     * More info: https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
+     * https://developers.google.com/web/updates/2012/02/Detect-DOM-changes-with-Mutation-Observers
+     */
+
+    var observer = new MutationObserver(function() {
+
+      /**
+       * Update all the previous instances of the treestack, rebuilding out DOMLikeObjects with new dimentions to
+       * account for the added/removed nodes.
+       */
+
+      treeStack = treeStack.map(function(tree) {
+        return createDOMLikeObject(tree.__nodeRef, 0, canvas.width);
+      });
+
+      /**
+       * Re-create the tree that is currently displayed, calculating the new height/widths of the children.
+       */
+      currentTree = createDOMLikeObject(currentTree.__nodeRef, 0, canvas.width);
+      drawDOM(canvas, currentTree);
+    });
+
+    /**
+     * These two observerConfigs seem to be enough to catch the node changes that we want.
+     * childList observes changes on the current target (document)'s children, and subtree
+     * observes changes on the target's descendents as well
+     */
+    var observerConfig = {
+      childList: true,
+      subtree: true
+    };
+
+    observer.observe(document, observerConfig);
+  }
+
+  if (domToCanvasOpts) {
+    renderCurrentDOM(domToCanvasOpts.width, domToCanvasOpts.height);
   }
 
   /**
@@ -541,4 +594,4 @@ var domToCanvas = (function() {
     renderCurrentDOM: renderCurrentDOM,
     createDOMLikeObject: createDOMLikeObject
   };
-})();
+})(null);
