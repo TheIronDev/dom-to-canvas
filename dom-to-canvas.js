@@ -81,7 +81,8 @@ var domToCanvas = (function() {
    * variables that don't ever change.
    */
   var startAngle = 0,
-    endAngle = 2 * Math.PI;
+    endAngle = 2 * Math.PI,
+    radius = 5;
 
   // I'm scoping these variables to the top so they can be used in multiple functions without having to pass them around.
   var cellHeight;
@@ -225,7 +226,6 @@ var domToCanvas = (function() {
   function drawNodes(ctx, node, height) {
 
     var tagName = node.tagName,
-      radius = 5,
       x = (node.start + (node.end - node.start) / 2),
       y = node.depth * height + 20;
 
@@ -268,14 +268,17 @@ var domToCanvas = (function() {
 
   /**
    * Recursively travel down the DOM tree, comparing the current node with the x=y coordinates of
-   * the last click event.
+   * the last click or hover event.
    */
   function searchForNodeWithXY(node, x, y) {
 
+    var verticalCenter = (node.start + (node.end - node.start) / 2),
+      horizontalCenter = node.depth * cellHeight + 20,
+      isInNode = (x >= verticalCenter - radius && x <= verticalCenter + radius && y >= horizontalCenter - radius && y <= horizontalCenter + radius),
+      child,
+      i;
 
-    var child, i;
-
-    if (y >= node.depth * cellHeight && y <= (node.depth + 1) * cellHeight) {
+    if (isInNode) {
       return node;
     }
 
@@ -293,7 +296,7 @@ var domToCanvas = (function() {
       }
     }
 
-    return node;
+    return null;
   }
 
   /**
@@ -322,6 +325,11 @@ var domToCanvas = (function() {
       domLike = treeStack.pop();
     } else {
       found = searchForNodeWithXY(currentTree, x, y);
+
+      if (!found) {
+        return;
+      }
+
       domLike = createDOMLikeObject(found, 0, canvas.width);
       treeStack.push(currentTree);
     }
@@ -355,8 +363,13 @@ var domToCanvas = (function() {
 
     var x = event.offsetX,
       y = event.offsetY,
-      foundNode = searchForNodeWithXY(currentTree, x, y),
-      domNode = foundNode.__nodeRef,
+      foundNode = searchForNodeWithXY(currentTree, x, y);
+
+    if (!foundNode) {
+      return;
+    }
+
+    var domNode = foundNode.__nodeRef,
       domNodeStyle = domNode.style;
 
     if (currentHoveredNode) {
@@ -506,7 +519,7 @@ var domToCanvas = (function() {
 
       canvasDebounce = setTimeout(function() {
         handleCurrentDocumentMouseMove(event);
-      }, 30);
+      }, 10);
     });
 
     closeDiv.addEventListener('click', function() {
