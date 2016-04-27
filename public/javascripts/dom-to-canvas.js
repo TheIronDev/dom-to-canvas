@@ -1,16 +1,20 @@
 /**
+ * Dom-To-Canvas
+ *
+ * The primary intent of this script is to render a DOM tree onto a canvas in a aesthetically pleasing manner.
+ *
+ * The secondary intent is to serve as an educational primer. Libraries will not be used, and there will be a
+ * verbose amount of documentation.
+ *
  * This file has two responsibilities:
  *  Convert a fetched document into an abstract DOM-like structure.
  *  Render a visual representation of the DOM-like structure.
- *
- *  For simplicity sake, I am polluting the global namespace with a drawDOM function, that is used in
- *  the /javascripts/app.js file.
  */
 
 'use strict';
 
 
-var drawDOM = (function() {
+var domToCanvas = (function() {
 
   /**
    * The document host object maintains a live HTMLCollection of certain element tags.
@@ -82,6 +86,8 @@ var drawDOM = (function() {
   // I'm scoping these variables to the top so they can be used in multiple functions without having to pass them around.
   var cellHeight;
   var currentTree;
+  var currentHoveredNode;
+  var currentHoveredNodeBackgroundColor;
   var ctx;
   var treeStack = [];
 
@@ -110,7 +116,9 @@ var drawDOM = (function() {
       end: end,
       start: start,
       tagName: node.tagName,
-      parentNode: parentNode
+      parentNode: parentNode,
+
+      __nodeRef: node.__nodeRef || node // create a reference to the original node
     };
 
 
@@ -163,7 +171,7 @@ var drawDOM = (function() {
       child,
       childStart;
 
-    for (var i = 0; i< node.childElementCount; i++) {
+    for (var i = 0; i< childCount; i++) {
 
       childStart = start + (i * width);
 
@@ -183,7 +191,7 @@ var drawDOM = (function() {
    * @param end {Number} - canvas ending point
    * @returns {Object}  Dom-like Tree
    */
-  function createDOMLike(myDocument, start, end) {
+  function createDOMLikeObject(myDocument, start, end) {
 
     /**
      * The document node, unlike other nodes, stores a reference to ids and certain types of nodes (images, scripts, etc).
@@ -265,10 +273,17 @@ var drawDOM = (function() {
   function searchForNodeWithXY(node, x, y) {
 
 
-    var child, i;
+    var center = (node.start + (node.end - node.start) / 2),
+      depth = node.depth,
+      child,
+      i;
 
-    if (y >= node.depth * cellHeight && y <= (node.depth + 1) * cellHeight) {
-      return node;
+    if (y >= depth * cellHeight && y <= (depth + 1) * cellHeight) {
+
+      if (x >= center - 5 && x <= center + 5) {
+        return node;
+      }
+      return null;
     }
 
     for (i = 0; i< node.childElementCount; i++) {
@@ -285,7 +300,7 @@ var drawDOM = (function() {
       }
     }
 
-    return node;
+    return null;
   }
 
   /**
@@ -314,7 +329,12 @@ var drawDOM = (function() {
       domLike = treeStack.pop();
     } else {
       found = searchForNodeWithXY(currentTree, x, y);
-      domLike = createDOMLike(found, 0, canvas.width);
+
+      if (!found) {
+        return;
+      }
+
+      domLike = createDOMLikeObject(found, 0, canvas.width);
       treeStack.push(currentTree);
     }
 
@@ -338,10 +358,39 @@ var drawDOM = (function() {
     drawNodes(ctx, domLike, cellHeight);
   }
 
+  /**
+   * If the user hovers over a node on the canvas, we want to reflect what they are hovering over
+   * by "highlighting" that node on the current document.
+   * @param event
+   */
+  function handleCurrentDocumentMouseMove(event) {
+
+    var x = event.offsetX,
+      y = event.offsetY,
+      foundNode = searchForNodeWithXY(currentTree, x, y);
+
+    if (!foundNode) {
+      return;
+    }
+
+    var domNode = foundNode.__nodeRef,
+      domNodeStyle = domNode.style;
+
+    if (currentHoveredNode) {
+      currentHoveredNode.style.backgroundColor = currentHoveredNodeBackgroundColor;
+    }
+
+    if (domNodeStyle) {
+      currentHoveredNodeBackgroundColor = domNodeStyle.backgroundColor;
+      domNodeStyle.backgroundColor = 'rgba(255, 255,0, 0.4)';
+      currentHoveredNode = domNode;
+    }
+
+  }
 
   /**
    * Given a canvas and a HTMLDocument, render nodes onto our canvas
-   * @param canvas {HTMLCanvasElement}
+   * @param canvas {Element}
    * @param myDocument {Document}
    */
   function drawDOM(canvas, myDocument) {
@@ -359,7 +408,7 @@ var drawDOM = (function() {
     ctx = canvas.getContext('2d');
 
 
-    var domLike = createDOMLike(myDocument, 0, canvas.width);
+    var domLike = createDOMLikeObject(myDocument, 0, canvas.width);
     currentTree = domLike;
     cellHeight = canvas.height / (domLike.largestDepth + 1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -376,9 +425,124 @@ var drawDOM = (function() {
     canvas.addEventListener('click', handleCanvasClick);
   }
 
+
   /**
-   * The only function we really need to expose is drawDOM.
-   * Everything else is an implementation detail that the rest of the app does not need to be aware of.
+   * Render the current page's document tree onto a canvas.
+   * @param width
+   * @param height
    */
-  return drawDOM;
+  function renderCurrentDOM(width, height) {
+
+    /**
+     * If there is no global document or document.createElement, this function is going to crash and burn.
+     * So I am adding a safety check and exiting early if that happens.
+     */
+    if (!document || !document.createElement) {
+      return;
+    }
+
+    width = width || 400;
+    height = height || 300;
+
+    /**
+     * DocumentFragments are super useful for building out a DOM structure that you want to render onto the
+     * page.  The idea is that rather than appending things to the DOM directly, you append them to the
+     * documentFragment, which gets around triggering a reflow.
+     *
+     * You can find more info on reflows here: https://developers.google.com/speed/articles/reflow#guidelines
+     */
+    var documentFragment = document.createDocumentFragment();
+
+
+    /**
+     * To create dom element with text in it, we have to first create the dom element, then we need to create
+     * a "text node", and append that text node to the dom element.
+     */
+    var closeDiv = document.createElement('div');
+    var closeText = document.createTextNode('close');
+    closeDiv.appendChild(closeText);
+
+    var canvas = document.createElement('canvas');
+
+    /**
+     * [].join() is a way of easily concatting a string that can be more efficient than a regular a + b + c.
+     *
+     * But, if the number of strings being concat is small, then it makes more sense to "+" the strings together.
+     */
+    var cssText = [
+      'background: rgba(255,255,255,0.8)',
+      'border: 1px solid #ccc',
+      'cursor: pointer',
+      'position: fixed',
+      'top: 5px',
+      'right: 5px',
+      'z-index: 999999'
+    ].join(';');
+
+    /**
+     * There are multiple ways to style this element.
+     *
+     * setAttribute - you can set the style attribute like you would any other attribute (href, etc)
+     * style.cssText -  allows you to add a series of styles in a single string
+     * style.background - you can set individual styles directly.
+     */
+    canvas.style.cssText = cssText;
+
+    closeDiv.style.cssText = 'position:fixed;right: 10px;top: 10px;z-index:9999999;cursor:pointer;';
+
+
+    /**
+     * Even if you set the css height and width of the canvas, what actually gets rendered will look
+     * disproportionate and stretched.
+     */
+    canvas.setAttribute('width', width);
+    canvas.setAttribute('height', height);
+
+    // We want to draw the DOM First, before appending the canvas to the document.body
+    drawDOM(canvas, document);
+
+    /**
+     * After we append the contents of the documentFragment into an element, the documentFragment then empties out.
+     */
+    documentFragment.appendChild(closeDiv);
+    documentFragment.appendChild(canvas);
+
+    // documentFragment.children.length === 2;
+    document.body.appendChild(documentFragment);
+    // documentFragment.children.length === 0;
+
+    /**
+     * This is an example of a simple debounce.  We don't care about all the things your mouse is hovering on top of,
+     * what we really care about is where the mouse stops on.
+     */
+    var canvasDebounce;
+    canvas.addEventListener('mousemove', function(event) {
+      if (canvasDebounce) {
+        clearTimeout(canvasDebounce);
+      }
+
+      canvasDebounce = setTimeout(function() {
+        handleCurrentDocumentMouseMove(event);
+      }, 10);
+    });
+
+    closeDiv.addEventListener('click', function() {
+      document.body.removeChild(closeDiv);
+      document.body.removeChild(canvas);
+
+      // If we did have a "hovered" style, revert it back to its original background
+      if (currentHoveredNode) {
+        currentHoveredNode.style.backgroundColor = currentHoveredNodeBackgroundColor;
+      }
+    });
+  }
+
+  /**
+   * Expose a drawDOM function, and a createDOMLikeObject function.
+   */
+  return {
+    drawDOM: drawDOM,
+    renderCurrentDOM: renderCurrentDOM,
+    createDOMLikeObject: createDOMLikeObject
+  };
 })();

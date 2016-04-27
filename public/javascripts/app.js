@@ -20,7 +20,8 @@
  * drawDOM gets defined in a different file, so just incase its undefined somwhoe, lets return a no-op function
  * @type {Function}
  */
-var drawDOM = drawDOM || function() {};
+var domToCanvas = domToCanvas || {};
+var drawDOM = domToCanvas.drawDOM || function() {};
 
 /**
  * I'm wrapping functionality in an IIFE, or "immediately-invoked function expression".
