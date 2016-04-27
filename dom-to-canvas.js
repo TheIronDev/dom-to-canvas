@@ -1,16 +1,20 @@
 /**
+ * Dom-To-Canvas
+ *
+ * The primary intent of this script is to render a DOM tree onto a canvas in a aesthetically pleasing manner.
+ *
+ * The secondary intent is to serve as an educational primer. Libraries will not be used, and there will be a
+ * verbose amount of documentation.
+ *
  * This file has two responsibilities:
  *  Convert a fetched document into an abstract DOM-like structure.
  *  Render a visual representation of the DOM-like structure.
- *
- *  For simplicity sake, I am polluting the global namespace with a drawDOM function, that is used in
- *  the /javascripts/app.js file.
  */
 
 'use strict';
 
 
-var drawDOM = (function() {
+var domToCanvas = (function() {
 
   /**
    * The document host object maintains a live HTMLCollection of certain element tags.
@@ -163,7 +167,7 @@ var drawDOM = (function() {
       child,
       childStart;
 
-    for (var i = 0; i< node.childElementCount; i++) {
+    for (var i = 0; i< childCount; i++) {
 
       childStart = start + (i * width);
 
@@ -183,7 +187,7 @@ var drawDOM = (function() {
    * @param end {Number} - canvas ending point
    * @returns {Object}  Dom-like Tree
    */
-  function createDOMLike(myDocument, start, end) {
+  function createDOMLikeObject(myDocument, start, end) {
 
     /**
      * The document node, unlike other nodes, stores a reference to ids and certain types of nodes (images, scripts, etc).
@@ -314,7 +318,7 @@ var drawDOM = (function() {
       domLike = treeStack.pop();
     } else {
       found = searchForNodeWithXY(currentTree, x, y);
-      domLike = createDOMLike(found, 0, canvas.width);
+      domLike = createDOMLikeObject(found, 0, canvas.width);
       treeStack.push(currentTree);
     }
 
@@ -338,10 +342,9 @@ var drawDOM = (function() {
     drawNodes(ctx, domLike, cellHeight);
   }
 
-
   /**
    * Given a canvas and a HTMLDocument, render nodes onto our canvas
-   * @param canvas {HTMLCanvasElement}
+   * @param canvas {Element}
    * @param myDocument {Document}
    */
   function drawDOM(canvas, myDocument) {
@@ -359,7 +362,7 @@ var drawDOM = (function() {
     ctx = canvas.getContext('2d');
 
 
-    var domLike = createDOMLike(myDocument, 0, canvas.width);
+    var domLike = createDOMLikeObject(myDocument, 0, canvas.width);
     currentTree = domLike;
     cellHeight = canvas.height / (domLike.largestDepth + 1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -376,9 +379,82 @@ var drawDOM = (function() {
     canvas.addEventListener('click', handleCanvasClick);
   }
 
+
   /**
-   * The only function we really need to expose is drawDOM.
-   * Everything else is an implementation detail that the rest of the app does not need to be aware of.
+   * Render the current page's document tree onto a canvas.
+   * @param width
+   * @param height
    */
-  return drawDOM;
+  function renderCurrentDOM(width, height) {
+
+    /**
+     * If there is no global document or document.createElement, this function is going to crash and burn.
+     * So I am adding a safety check and exiting early if that happens.
+     */
+    if (!document || !document.createElement) {
+      return;
+    }
+
+    width = width || 400;
+    height = height || 300;
+
+    /**
+     * DocumentFragments are super useful for building out a DOM structure that you want to render onto the
+     * page.  The idea is that rather than appending things to the DOM directly, you append them to the
+     * documentFragment, which gets around triggering a reflow.
+     *
+     * Reflows
+     */
+    var documentFragment = document.createDocumentFragment();
+
+
+    /**
+     * To create dom element with text in it, we have to first create the dom element, then we need to create
+     * a "text node", and append that text node to the dom element.
+     */
+    var closeDiv = document.createElement('div');
+    var closeText = document.createTextNode('close');
+    closeDiv.appendChild(closeText);
+
+    var canvas = document.createElement('canvas');
+
+    /**
+     * There are multiple ways to style this element.
+     *
+     * setAttribute - you can set the style attribute like you would any other attribute (href, etc)
+     * style.cssText -  allows you to add a series of styles in a single string
+     * style.background - you can set individual styles directly.
+     */
+
+    canvas.style.cssText = "position: fixed; top: 5px; right: 5px; background: rgba(255,255,255,0.8); border: 1px solid #ccc;";
+
+    /**
+     * Even if you set the css height and width of the canvas, what actually gets rendered will look
+     * disproportionate and stretched.
+     */
+    canvas.setAttribute('width', width);
+    canvas.setAttribute('height', height);
+
+    // We want to draw the DOM First, before appending the canvas to the document.body
+    drawDOM(canvas, document);
+
+    /**
+     * After we append the contents of the documentFragment into an element, the documentFragment then empties out.
+     */
+    documentFragment.appendChild(closeDiv);
+    documentFragment.appendChild(canvas);
+
+    // documentFragment.children.length === 2;
+    document.body.appendChild(documentFragment);
+    // documentFragment.children.length === 0;
+  }
+
+  /**
+   * Expose a drawDOM function, and a createDOMLikeObject function.
+   */
+  return {
+    drawDOM: drawDOM,
+    renderCurrentDOM: renderCurrentDOM,
+    createDOMLikeObject: createDOMLikeObject
+  };
 })();

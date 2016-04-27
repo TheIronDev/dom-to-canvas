@@ -11,7 +11,6 @@ verbose amount of documentation.
 * [Demo Here](http://dom-to-canvas.herokuapp.com/)
 * [Demo Repository](https://github.com/TheIronDeveloper/dom-to-canvas/tree/demo)
 
-
 ## Contributing
 
 I welcome any and all contributions. My only requests are to please avoid using libraries (I want to know
