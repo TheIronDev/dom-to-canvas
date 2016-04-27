@@ -86,6 +86,8 @@ var domToCanvas = (function() {
   // I'm scoping these variables to the top so they can be used in multiple functions without having to pass them around.
   var cellHeight;
   var currentTree;
+  var currentHoveredNode;
+  var currentHoveredNodeBackgroundColor;
   var ctx;
   var treeStack = [];
 
@@ -114,7 +116,9 @@ var domToCanvas = (function() {
       end: end,
       start: start,
       tagName: node.tagName,
-      parentNode: parentNode
+      parentNode: parentNode,
+
+      __nodeRef: node.__nodeRef || node // create a reference to the original node
     };
 
 
@@ -343,6 +347,31 @@ var domToCanvas = (function() {
   }
 
   /**
+   * If the user hovers over a node on the canvas, we want to reflect what they are hovering over
+   * by "highlighting" that node on the current document.
+   * @param event
+   */
+  function handleCurrentDocumentMouseMove(event) {
+
+    var x = event.offsetX,
+      y = event.offsetY,
+      foundNode = searchForNodeWithXY(currentTree, x, y),
+      domNode = foundNode.__nodeRef,
+      domNodeStyle = domNode.style;
+
+    if (currentHoveredNode) {
+      currentHoveredNode.style.backgroundColor = currentHoveredNodeBackgroundColor;
+    }
+
+    if (domNodeStyle) {
+      currentHoveredNodeBackgroundColor = domNodeStyle.backgroundColor;
+      domNodeStyle.backgroundColor = 'rgba(255, 255,0, 0.4)';
+      currentHoveredNode = domNode;
+    }
+
+  }
+
+  /**
    * Given a canvas and a HTMLDocument, render nodes onto our canvas
    * @param canvas {Element}
    * @param myDocument {Document}
@@ -403,7 +432,7 @@ var domToCanvas = (function() {
      * page.  The idea is that rather than appending things to the DOM directly, you append them to the
      * documentFragment, which gets around triggering a reflow.
      *
-     * Reflows
+     * You can find more info on reflows here: https://developers.google.com/speed/articles/reflow#guidelines
      */
     var documentFragment = document.createDocumentFragment();
 
@@ -419,14 +448,31 @@ var domToCanvas = (function() {
     var canvas = document.createElement('canvas');
 
     /**
+     * [].join() is a way of easily concatting a string that can be more efficient than a regular a + b + c.
+     *
+     * But, if the number of strings being concat is small, then it makes more sense to "+" the strings together.
+     */
+    var cssText = [
+      'background: rgba(255,255,255,0.8)',
+      'border: 1px solid #ccc',
+      'cursor: pointer',
+      'position: fixed',
+      'top: 5px',
+      'right: 5px',
+      'z-index: 999999'
+    ].join(';');
+
+    /**
      * There are multiple ways to style this element.
      *
      * setAttribute - you can set the style attribute like you would any other attribute (href, etc)
      * style.cssText -  allows you to add a series of styles in a single string
      * style.background - you can set individual styles directly.
      */
+    canvas.style.cssText = cssText;
 
-    canvas.style.cssText = "position: fixed; top: 5px; right: 5px; background: rgba(255,255,255,0.8); border: 1px solid #ccc;";
+    closeDiv.style.cssText = 'position:fixed;right: 10px;top: 10px;z-index:9999999;cursor:pointer;';
+
 
     /**
      * Even if you set the css height and width of the canvas, what actually gets rendered will look
@@ -447,6 +493,31 @@ var domToCanvas = (function() {
     // documentFragment.children.length === 2;
     document.body.appendChild(documentFragment);
     // documentFragment.children.length === 0;
+
+    /**
+     * This is an example of a simple debounce.  We don't care about all the things your mouse is hovering on top of,
+     * what we really care about is where the mouse stops on.
+     */
+    var canvasDebounce;
+    canvas.addEventListener('mousemove', function(event) {
+      if (canvasDebounce) {
+        clearTimeout(canvasDebounce);
+      }
+
+      canvasDebounce = setTimeout(function() {
+        handleCurrentDocumentMouseMove(event);
+      }, 30);
+    });
+
+    closeDiv.addEventListener('click', function() {
+      document.body.removeChild(closeDiv);
+      document.body.removeChild(canvas);
+
+      // If we did have a "hovered" style, revert it back to its original background
+      if (currentHoveredNode) {
+        currentHoveredNode.style.backgroundColor = currentHoveredNodeBackgroundColor;
+      }
+    });
   }
 
   /**
