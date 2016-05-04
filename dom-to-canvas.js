@@ -112,7 +112,35 @@ var domToCanvas = (function(domToCanvasOpts) {
       documentRef.largestDepth = depth;
     }
 
+    /**
+     * This is our new "node". We've creating an object literal that gives a close representation of an actual DOM
+     * Element.
+     *
+     * DOM traversal happens by either:
+     *  moving up: parentNode,
+     *  moving sideways: nextSibling, previousSibling, nextElementSibling, or previousElementSibling
+     *  moving down: children, childNodes, firstChild, lastChild, firstElementChild, lastElementChild
+     *
+     * The "Element" traversals (children, nextElementSibling) will only return traversable nodes... while the regular
+     * traversals (childNodes, nextSibling) will return textNodes, commentNodes, and ElementNodes.
+     *
+     * The DOM trees I've looked at all seem to look super crowded already, so I'm going to skip text and comment nodes
+     * and instead go straight to Element nodes.
+     *
+     */
     var newNode = {
+
+      firstChild: null,
+      lastChild: null,
+      nextSibling: null,
+      previousSibling: null,
+      childNodes: [],
+
+      firstElementChild: null,
+      lastElementChild: null,
+      nextElementSibling: null,
+      previousElementSibling: null,
+
       children: [],
       childElementCount: node.childElementCount,
       attributes: {},
@@ -122,7 +150,7 @@ var domToCanvas = (function(domToCanvasOpts) {
       tagName: node.tagName,
       parentNode: parentNode,
 
-      __nodeRef: node.__nodeRef || node // create a reference to the original node
+      __nodeRef: node.__nodeRef || node // create a reference to the original node. This does NOT exist on the DOM Element
     };
 
 
@@ -170,7 +198,7 @@ var domToCanvas = (function(domToCanvasOpts) {
     }
 
     var childDepth = depth + 1,
-        childCount = node.childElementCount,
+        childCount = newNode.childElementCount,
         width = (end - start) / childCount,
         child,
         childStart;
@@ -182,6 +210,22 @@ var domToCanvas = (function(domToCanvasOpts) {
       child = traverseDomLikeNode(node.children[i], newNode, childDepth, childStart, childStart + width, documentRef);
       newNode.children.push(child);
     }
+
+    // Nodes have firstChild/lastChild properties too!
+    if (childCount) {
+      newNode.firstElementChild = newNode.children[0];
+      newNode.lastElementChild = newNode.children[childCount-1];
+    }
+
+    // Binding relationship between sibling elements
+    newNode.children.forEach(function(child, childIndex) {
+      if (childIndex > 0) {
+        child.previousElementSibling = newNode.children[childIndex-1];
+      }
+      if (childIndex < childCount - 1) {
+        child.nextElementSibling = newNode.children[childIndex+1];
+      }
+    });
 
     return newNode;
   }
@@ -231,6 +275,31 @@ var domToCanvas = (function(domToCanvasOpts) {
     var tagName = node.tagName,
         x = (node.start + (node.end - node.start) / 2),
         y = node.depth * height + 20;
+
+    var firstElementChild = node.firstElementChild,
+        lastElementChild = node.lastElementChild,
+        firstX,
+        firstY,
+        lastX,
+        lastY;
+
+    /**
+     * Drawing the lines between sibling elements.
+     * For us, that just means draw a line from the first to last child elements.
+     */
+    if (firstElementChild && firstElementChild !== lastElementChild) {
+      firstX = (firstElementChild.start + (firstElementChild.end - firstElementChild.start) / 2);
+      firstY = firstElementChild.depth * height + 20;
+
+      lastX = (lastElementChild.start + (lastElementChild.end - lastElementChild.start) / 2);
+      lastY = lastElementChild.depth * height + 20;
+
+      ctx.beginPath();
+      ctx.moveTo(firstX,firstY);
+      ctx.lineTo(lastX, lastY);
+      ctx.stroke();
+      ctx.closePath();
+    }
 
     /**
      * Important Note: We recreated the dom using objects and arrays.
