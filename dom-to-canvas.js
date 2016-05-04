@@ -84,8 +84,8 @@ var domToCanvas = (function(domToCanvasOpts) {
    * variables that don't ever change.
    */
   var startAngle = 0,
-    endAngle = 2 * Math.PI,
-    radius = 5;
+      endAngle = 2 * Math.PI,
+      radius = 5;
 
   // I'm scoping these variables to the top so they can be used in multiple functions without having to pass them around.
   var cellHeight;
@@ -127,8 +127,8 @@ var domToCanvas = (function(domToCanvasOpts) {
 
 
     var attributes = node.attributes,
-      attributesLength,
-      attribute;
+        attributesLength,
+        attribute;
 
     /**
      * In the event we are traversing DOM-like nodes (and not real DOM nodes), we can simply set the
@@ -170,10 +170,10 @@ var domToCanvas = (function(domToCanvasOpts) {
     }
 
     var childDepth = depth + 1,
-      childCount = node.childElementCount,
-      width = (end - start) / childCount,
-      child,
-      childStart;
+        childCount = node.childElementCount,
+        width = (end - start) / childCount,
+        child,
+        childStart;
 
     for (var i = 0; i< childCount; i++) {
 
@@ -229,8 +229,8 @@ var domToCanvas = (function(domToCanvasOpts) {
   function drawNodes(ctx, node, height) {
 
     var tagName = node.tagName,
-      x = (node.start + (node.end - node.start) / 2),
-      y = node.depth * height + 20;
+        x = (node.start + (node.end - node.start) / 2),
+        y = node.depth * height + 20;
 
     /**
      * Important Note: We recreated the dom using objects and arrays.
@@ -243,7 +243,7 @@ var domToCanvas = (function(domToCanvasOpts) {
 
       // Draw a line from our current node, to each of its children
       var childX = (child.start + (child.end - child.start) / 2),
-        childY = child.depth * height + 20;
+          childY = child.depth * height + 20;
 
       ctx.beginPath();
       ctx.moveTo(x,y);
@@ -276,10 +276,10 @@ var domToCanvas = (function(domToCanvasOpts) {
   function searchForNodeWithXY(node, x, y) {
 
     var verticalCenter = (node.start + (node.end - node.start) / 2),
-      horizontalCenter = node.depth * cellHeight + 20,
-      isInNode = (x >= verticalCenter - radius && x <= verticalCenter + radius && y >= horizontalCenter - radius && y <= horizontalCenter + radius),
-      child,
-      i;
+        horizontalCenter = node.depth * cellHeight + 20,
+        isInNode = (x >= verticalCenter - radius && x <= verticalCenter + radius && y >= horizontalCenter - radius && y <= horizontalCenter + radius),
+        child,
+        i;
 
     if (isInNode) {
       return node;
@@ -313,10 +313,10 @@ var domToCanvas = (function(domToCanvasOpts) {
   function handleCanvasClick(event) {
 
     var x = event.offsetX,
-      y = event.offsetY,
-      canvas = ctx.canvas,
-      found,
-      domLike;
+        y = event.offsetY,
+        canvas = ctx.canvas,
+        found,
+        domLike;
 
     /**
      * We're using a stack (actually just an array we are treating like a stack)
@@ -365,15 +365,15 @@ var domToCanvas = (function(domToCanvasOpts) {
   function handleCurrentDocumentMouseMove(event) {
 
     var x = event.offsetX,
-      y = event.offsetY,
-      foundNode = searchForNodeWithXY(currentTree, x, y);
+        y = event.offsetY,
+        foundNode = searchForNodeWithXY(currentTree, x, y);
 
     if (!foundNode) {
       return;
     }
 
     var domNode = foundNode.__nodeRef,
-      domNodeStyle = domNode.style;
+        domNodeStyle = domNode.style;
 
     if (currentHoveredNode) {
       currentHoveredNode.style.backgroundColor = currentHoveredNodeBackgroundColor;
