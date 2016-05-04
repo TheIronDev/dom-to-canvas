@@ -86,6 +86,8 @@ var drawDOM = domToCanvas.drawDOM || function() {};
      * if we decide to pass in a function that has been `.bind`ed already... but we probably don't want to do that.
      */
     var response = this.response;
+
+    window.location.hash = myInput.value;
     drawDOM(myCanvas, response);
   });
   xhr.responseType ='document';
@@ -191,5 +193,31 @@ var drawDOM = domToCanvas.drawDOM || function() {};
     // I should never get called, because the form is "stopping propagation"
     console.log('If you see this, propagation is not bring stopped');
   });
+
+  // Automatically fetch if there is a url hash
+  if (window.location.hash) {
+
+    myInput.value = window.location.hash.slice(1);
+
+      /**
+       * Although there are many ways to submit a form, I wanted to have a quick demo of how you can
+       * create synthetic events to dispatch.
+       *
+       * I'm instantiating a new MouseEvent, which comes with a series of attributes that are mouse-specific.
+       * I could also instantiate a new generic event with `new Event('thing')`.
+       *
+       * https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+       * https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Creating_and_triggering_events
+       * https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent
+       */
+      var syntheticClick = new MouseEvent('click', {
+      'view': window,
+      'bubbles': false,
+      'cancelable': false
+    });
+
+    var submitButton = document.getElementsByClassName('menu_submit')[0];
+    submitButton.dispatchEvent(syntheticClick);
+  }
 
 })(document, drawDOM);
