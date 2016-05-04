@@ -13,8 +13,11 @@
 
 'use strict';
 
-
-var domToCanvas = (function() {
+/**
+ * For convenience, if an object (or truthy value) is passed into this IIFE, then it will automatically execute
+ * renderCurrentDOM(), rendering a canvas onto the current document.
+ */
+var domToCanvas = (function(domToCanvasOpts) {
 
   /**
    * The document host object maintains a live HTMLCollection of certain element tags.
@@ -81,7 +84,8 @@ var domToCanvas = (function() {
    * variables that don't ever change.
    */
   var startAngle = 0,
-    endAngle = 2 * Math.PI;
+      endAngle = 2 * Math.PI,
+      radius = 5;
 
   // I'm scoping these variables to the top so they can be used in multiple functions without having to pass them around.
   var cellHeight;
@@ -108,7 +112,35 @@ var domToCanvas = (function() {
       documentRef.largestDepth = depth;
     }
 
+    /**
+     * This is our new "node". We've creating an object literal that gives a close representation of an actual DOM
+     * Element.
+     *
+     * DOM traversal happens by either:
+     *  moving up: parentNode,
+     *  moving sideways: nextSibling, previousSibling, nextElementSibling, or previousElementSibling
+     *  moving down: children, childNodes, firstChild, lastChild, firstElementChild, lastElementChild
+     *
+     * The "Element" traversals (children, nextElementSibling) will only return traversable nodes... while the regular
+     * traversals (childNodes, nextSibling) will return textNodes, commentNodes, and ElementNodes.
+     *
+     * The DOM trees I've looked at all seem to look super crowded already, so I'm going to skip text and comment nodes
+     * and instead go straight to Element nodes.
+     *
+     */
     var newNode = {
+
+      firstChild: null,
+      lastChild: null,
+      nextSibling: null,
+      previousSibling: null,
+      childNodes: [],
+
+      firstElementChild: null,
+      lastElementChild: null,
+      nextElementSibling: null,
+      previousElementSibling: null,
+
       children: [],
       childElementCount: node.childElementCount,
       attributes: {},
@@ -118,13 +150,13 @@ var domToCanvas = (function() {
       tagName: node.tagName,
       parentNode: parentNode,
 
-      __nodeRef: node.__nodeRef || node // create a reference to the original node
+      __nodeRef: node.__nodeRef || node // create a reference to the original node. This does NOT exist on the DOM Element
     };
 
 
     var attributes = node.attributes,
-      attributesLength,
-      attribute;
+        attributesLength,
+        attribute;
 
     /**
      * In the event we are traversing DOM-like nodes (and not real DOM nodes), we can simply set the
@@ -166,10 +198,10 @@ var domToCanvas = (function() {
     }
 
     var childDepth = depth + 1,
-      childCount = node.childElementCount,
-      width = (end - start) / childCount,
-      child,
-      childStart;
+        childCount = newNode.childElementCount,
+        width = (end - start) / childCount,
+        child,
+        childStart;
 
     for (var i = 0; i< childCount; i++) {
 
@@ -178,6 +210,22 @@ var domToCanvas = (function() {
       child = traverseDomLikeNode(node.children[i], newNode, childDepth, childStart, childStart + width, documentRef);
       newNode.children.push(child);
     }
+
+    // Nodes have firstChild/lastChild properties too!
+    if (childCount) {
+      newNode.firstElementChild = newNode.children[0];
+      newNode.lastElementChild = newNode.children[childCount-1];
+    }
+
+    // Binding relationship between sibling elements
+    newNode.children.forEach(function(child, childIndex) {
+      if (childIndex > 0) {
+        child.previousElementSibling = newNode.children[childIndex-1];
+      }
+      if (childIndex < childCount - 1) {
+        child.nextElementSibling = newNode.children[childIndex+1];
+      }
+    });
 
     return newNode;
   }
@@ -225,9 +273,33 @@ var domToCanvas = (function() {
   function drawNodes(ctx, node, height) {
 
     var tagName = node.tagName,
-      radius = 5,
-      x = (node.start + (node.end - node.start) / 2),
-      y = node.depth * height + 20;
+        x = (node.start + (node.end - node.start) / 2),
+        y = node.depth * height + 20;
+
+    var firstElementChild = node.firstElementChild,
+        lastElementChild = node.lastElementChild,
+        firstX,
+        firstY,
+        lastX,
+        lastY;
+
+    /**
+     * Drawing the lines between sibling elements.
+     * For us, that just means draw a line from the first to last child elements.
+     */
+    if (firstElementChild && firstElementChild !== lastElementChild) {
+      firstX = (firstElementChild.start + (firstElementChild.end - firstElementChild.start) / 2);
+      firstY = firstElementChild.depth * height + 20;
+
+      lastX = (lastElementChild.start + (lastElementChild.end - lastElementChild.start) / 2);
+      lastY = lastElementChild.depth * height + 20;
+
+      ctx.beginPath();
+      ctx.moveTo(firstX,firstY);
+      ctx.lineTo(lastX, lastY);
+      ctx.stroke();
+      ctx.closePath();
+    }
 
     /**
      * Important Note: We recreated the dom using objects and arrays.
@@ -240,7 +312,7 @@ var domToCanvas = (function() {
 
       // Draw a line from our current node, to each of its children
       var childX = (child.start + (child.end - child.start) / 2),
-        childY = child.depth * height + 20;
+          childY = child.depth * height + 20;
 
       ctx.beginPath();
       ctx.moveTo(x,y);
@@ -268,22 +340,18 @@ var domToCanvas = (function() {
 
   /**
    * Recursively travel down the DOM tree, comparing the current node with the x=y coordinates of
-   * the last click event.
+   * the last click or hover event.
    */
   function searchForNodeWithXY(node, x, y) {
 
+    var verticalCenter = (node.start + (node.end - node.start) / 2),
+        horizontalCenter = node.depth * cellHeight + 20,
+        isInNode = (x >= verticalCenter - radius && x <= verticalCenter + radius && y >= horizontalCenter - radius && y <= horizontalCenter + radius),
+        child,
+        i;
 
-    var center = (node.start + (node.end - node.start) / 2),
-      depth = node.depth,
-      child,
-      i;
-
-    if (y >= depth * cellHeight && y <= (depth + 1) * cellHeight) {
-
-      if (x >= center - 5 && x <= center + 5) {
-        return node;
-      }
-      return null;
+    if (isInNode) {
+      return node;
     }
 
     for (i = 0; i< node.childElementCount; i++) {
@@ -314,10 +382,10 @@ var domToCanvas = (function() {
   function handleCanvasClick(event) {
 
     var x = event.offsetX,
-      y = event.offsetY,
-      canvas = ctx.canvas,
-      found,
-      domLike;
+        y = event.offsetY,
+        canvas = ctx.canvas,
+        found,
+        domLike;
 
     /**
      * We're using a stack (actually just an array we are treating like a stack)
@@ -366,15 +434,15 @@ var domToCanvas = (function() {
   function handleCurrentDocumentMouseMove(event) {
 
     var x = event.offsetX,
-      y = event.offsetY,
-      foundNode = searchForNodeWithXY(currentTree, x, y);
+        y = event.offsetY,
+        foundNode = searchForNodeWithXY(currentTree, x, y);
 
     if (!foundNode) {
       return;
     }
 
     var domNode = foundNode.__nodeRef,
-      domNodeStyle = domNode.style;
+        domNodeStyle = domNode.style;
 
     if (currentHoveredNode) {
       currentHoveredNode.style.backgroundColor = currentHoveredNodeBackgroundColor;
@@ -415,6 +483,14 @@ var domToCanvas = (function() {
     ctx.strokeStyle = '#ccc';
     drawNodes(ctx, domLike, cellHeight);
 
+    if (treeStack.length) {
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.moveTo(10, 10);
+      ctx.lineTo(20, 5);
+      ctx.lineTo(20, 15);
+      ctx.fill();
+    }
 
     /**
      * Interesting detail about listeners: if you assign two duplicate eventHandlers to an event, then only one
@@ -535,6 +611,48 @@ var domToCanvas = (function() {
         currentHoveredNode.style.backgroundColor = currentHoveredNodeBackgroundColor;
       }
     });
+
+    /**
+     * And now, to be extra fancy, we're going to use an observer to watch the
+     * document for changes.
+     *
+     * More info: https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
+     * https://developers.google.com/web/updates/2012/02/Detect-DOM-changes-with-Mutation-Observers
+     */
+
+    var observer = new MutationObserver(function() {
+
+      /**
+       * Update all the previous instances of the treestack, rebuilding out DOMLikeObjects with new dimentions to
+       * account for the added/removed nodes.
+       */
+
+      treeStack = treeStack.map(function(tree) {
+        return createDOMLikeObject(tree.__nodeRef, 0, canvas.width);
+      });
+
+      /**
+       * Re-create the tree that is currently displayed, calculating the new height/widths of the children.
+       */
+      currentTree = createDOMLikeObject(currentTree.__nodeRef, 0, canvas.width);
+      drawDOM(canvas, currentTree);
+    });
+
+    /**
+     * These two observerConfigs seem to be enough to catch the node changes that we want.
+     * childList observes changes on the current target (document)'s children, and subtree
+     * observes changes on the target's descendents as well
+     */
+    var observerConfig = {
+      childList: true,
+      subtree: true
+    };
+
+    observer.observe(document, observerConfig);
+  }
+
+  if (domToCanvasOpts) {
+    renderCurrentDOM(domToCanvasOpts.width, domToCanvasOpts.height);
   }
 
   /**
@@ -545,4 +663,4 @@ var domToCanvas = (function() {
     renderCurrentDOM: renderCurrentDOM,
     createDOMLikeObject: createDOMLikeObject
   };
-})();
+})(null);
