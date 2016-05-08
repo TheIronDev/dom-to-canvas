@@ -28,7 +28,6 @@ understanding to advanced. They are listed in no particular order.
 * https://developers.google.com/web/updates/2012/02/Detect-DOM-changes-with-Mutation-Observers
 * https://developer.mozilla.org/en-US/docs/Web/API/Document/links
 * https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
-* https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
 * https://developers.google.com/speed/articles/reflow#guidelines
 
 ## Links from the [demo branch](https://github.com/TheIronDeveloper/dom-to-canvas/tree/demo)
@@ -38,3 +37,8 @@ understanding to advanced. They are listed in no particular order.
 * https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
 * https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent
 * https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Creating_and_triggering_events
+
+## Canvas Documentation
+* https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+* https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillRect
+* https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL

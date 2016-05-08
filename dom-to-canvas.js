@@ -409,6 +409,8 @@ var domToCanvas = (function(domToCanvasOpts) {
     currentTree = domLike;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     /**
      * If our stack has any nodes in them, then we should display an arrow to indicate the user can go backward.
@@ -479,7 +481,11 @@ var domToCanvas = (function(domToCanvasOpts) {
     var domLike = createDOMLikeObject(myDocument, 0, canvas.width);
     currentTree = domLike;
     cellHeight = canvas.height / (domLike.largestDepth + 1);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     ctx.strokeStyle = '#ccc';
     drawNodes(ctx, domLike, cellHeight);
 
