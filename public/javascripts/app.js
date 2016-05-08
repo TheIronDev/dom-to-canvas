@@ -39,6 +39,7 @@ var drawDOM = domToCanvas.drawDOM || function() {};
   var myForm = document.getElementById('fetchUrl'),
     myInput = document.getElementById('url'),
     myCanvas = document.getElementById('dom-to-canvas'),
+    myFavicon = document.getElementById('favicon'),
     myBody = document.body,
 
 
@@ -57,7 +58,9 @@ var drawDOM = domToCanvas.drawDOM || function() {};
      *
      * Here is a helpful primer visually on whats happening: http://www.quirksmode.org/js/events_order.html
      */
-    useCapture = false;
+    useCapture = false,
+
+    newFaviconImage;
 
 
   /**
@@ -89,6 +92,13 @@ var drawDOM = domToCanvas.drawDOM || function() {};
 
     window.location.hash = myInput.value;
     drawDOM(myCanvas, response);
+
+    /**
+     * For fun, I'm replacing the favicon with the contents of the canvas.
+     * https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL
+     */
+    newFaviconImage = myCanvas.toDataURL('image/jpg');
+    myFavicon.href = newFaviconImage;
   });
 
   /**
