@@ -12,7 +12,7 @@ verbose amount of documentation.
 ## Demo App
 
 * [Demo Here](http://dom-to-canvas.herokuapp.com/)
-* [Demo Repository](https://github.com/TheIronDeveloper/dom-to-canvas/tree/demo)
+* [Demo Branch](https://github.com/TheIronDeveloper/dom-to-canvas/tree/demo)
 
 ## Contributing
 
@@ -30,3 +30,11 @@ understanding to advanced. They are listed in no particular order.
 * https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
 * https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
 * https://developers.google.com/speed/articles/reflow#guidelines
+
+## Links from the [demo branch](https://github.com/TheIronDeveloper/dom-to-canvas/tree/demo)
+
+* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
+* https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest
+* https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+* https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent
+* https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Creating_and_triggering_events
