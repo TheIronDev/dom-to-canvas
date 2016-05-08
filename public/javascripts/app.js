@@ -90,7 +90,6 @@ var drawDOM = domToCanvas.drawDOM || function() {};
     window.location.hash = myInput.value;
     drawDOM(myCanvas, response);
   });
-  xhr.responseType ='document';
 
   /**
    * Defining a variable outside of the eventListener scope that can be used to debounce events... more on that in a min.
@@ -183,6 +182,7 @@ var drawDOM = domToCanvas.drawDOM || function() {};
        * the client.
        */
       xhr.open('GET', '/fetchUrl?url=' + url);
+      xhr.responseType ='document';
       xhr.send();
 
     }, 200);
