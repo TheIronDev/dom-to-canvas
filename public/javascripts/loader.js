@@ -61,5 +61,5 @@
 
 })({
     xhrScripts: ['https://raw.githubusercontent.com/TheIronDeveloper/dom-to-canvas/master/dom-to-canvas.js'],
-    normalScripts: ['/javascripts/app.js', '/javascripts/facebook.js']
+    normalScripts: ['/javascripts/app.js', '/javascripts/facebook.js', '/javascripts/googleAnalytics.js']
 });
