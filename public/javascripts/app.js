@@ -143,6 +143,19 @@ var drawDOM = domToCanvas.drawDOM || function() {};
     }
 
     /**
+     * I've noticed that people often enter "www.url.com", skipping the protocol part (http:// or https://).
+     * Rather than fixing this on the server, I'm updating it on the client so the url hash can update too.
+     */
+    if (url.indexOf('http') === -1) {
+
+      if (url.indexOf('://') === -1) {
+        url = '://' + url;
+      }
+      url = 'http'+ url;
+      myInput.value = url;
+    }
+
+    /**
      * Elements now have a classList, which returns a DOMTokenList. Rather than having to manually edit the className
      * directly, we can use a classList to add / remove classes.
      */
