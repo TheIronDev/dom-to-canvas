@@ -110,3 +110,23 @@ h1 {
   top: 4px;
   margin: 0 5px;
 }
+
+/* Some responsive styles to make the site prettier for mobile */
+@media (max-width: 600px) {
+  .social {
+    display: none;
+  }
+  .menu_input {
+    margin-bottom: 1rem;
+  }
+  .menu_submit {
+    position: static;
+    width: 100%;
+  }
+  .about_imageWrapper {
+    display: block;
+  }
+  .gravatar {
+    width: 50px;
+  }
+}
