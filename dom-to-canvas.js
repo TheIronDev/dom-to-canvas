@@ -92,6 +92,7 @@ var domToCanvas = (function(domToCanvasOpts) {
   var currentTree;
   var currentHoveredNode;
   var currentHoveredNodeBackgroundColor;
+  var currentTreeHeight;
   var ctx;
   var treeStack = [];
 
@@ -437,11 +438,36 @@ var domToCanvas = (function(domToCanvasOpts) {
 
     var x = event.offsetX,
         y = event.offsetY,
-        foundNode = searchForNodeWithXY(currentTree, x, y);
+        foundNode = searchForNodeWithXY(currentTree, x, y),
+        nodeText,
+        foundX,
+        foundY;
 
     if (!foundNode) {
       return;
     }
+
+    /**
+     * If we are hovering over a node, clear the canvas, redraw it, and render some text that describes that node.
+     * The reason we need to clear the canvas is to reset any previous instances of node text descriptions.
+     *
+     * For now, the text is of the form:  TAGNAME#id
+     */
+    if (foundNode.tagName) {
+
+      createDOMLikeObject(currentTree.__nodeRef, 0, ctx.canvas.width);
+      drawDOM(ctx.canvas, currentTree);
+      nodeText = [
+        foundNode.tagName,
+        (foundNode.id ? '#'+foundNode.id : '')
+      ].join('');
+
+      ctx.fillStyle = '#000';
+      foundX = foundNode.start + (foundNode.end - foundNode.start) /2;
+      foundY = foundNode.depth * currentTreeHeight + 20;
+      ctx.fillText(nodeText, foundX + 5, foundY - 5);
+    }
+
 
     var domNode = foundNode.__nodeRef,
         domNodeStyle = domNode.style;
@@ -481,6 +507,7 @@ var domToCanvas = (function(domToCanvasOpts) {
     var domLike = createDOMLikeObject(myDocument, 0, canvas.width);
     currentTree = domLike;
     cellHeight = canvas.height / (domLike.largestDepth + 1);
+    currentTreeHeight = cellHeight;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#fff';
@@ -505,6 +532,17 @@ var domToCanvas = (function(domToCanvasOpts) {
      * click events.
      */
     canvas.addEventListener('click', handleCanvasClick);
+
+    var canvasDebounce;
+    canvas.addEventListener('mousemove', function(event) {
+      if (canvasDebounce) {
+        clearTimeout(canvasDebounce);
+      }
+
+      canvasDebounce = setTimeout(function() {
+        handleCurrentDocumentMouseMove(event);
+      }, 10);
+    });
   }
 
 
