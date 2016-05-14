@@ -1,5 +1,12 @@
 {
   "name": "dom-to-canvas",
   "version": "0.0.0",
-  "main": "dom-to-canvas.js"
+  "main": "dom-to-canvas.js",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "^2.10.0",
+    "eslint-config-google": "^0.5.0"
+  }
 }
